@@ -1,0 +1,17 @@
+# pnpm 11 reads settings from here, not from a "pnpm" key in package.json.
+#
+# Without this, `pnpm install` stops on ERR_PNPM_IGNORED_BUILDS and exits 1,
+# because pnpm now requires an explicit decision on every dependency that wants
+# to run a postinstall script.
+#
+# All five are declined, matching the Flue monorepo. workerd and esbuild ship
+# their real binaries as platform-specific optional packages
+# (@cloudflare/workerd-darwin-arm64, @esbuild/darwin-arm64), so their install
+# scripts have nothing left to do. The other three are transitive dependencies
+# of @earendil-works/pi-ai's bundled provider SDKs and are never loaded here.
+allowBuilds:
+  '@google/genai': false
+  core-js-pure: false
+  esbuild: false
+  protobufjs: false
+  workerd: false

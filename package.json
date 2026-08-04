@@ -1,0 +1,59 @@
+{
+  "name": "triage-suspicious-login-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "LoginTriage — a Flue agent that triages suspicious Cloudflare Access logins and reports to Slack.",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "deploy": "vite build && wrangler deploy",
+    "predeploy": "vite build && wrangler deploy --dry-run",
+    "agent": "flue run src/agents/login-triage.ts --message",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.19.0",
+    "pnpm": ">=11"
+  },
+  "cloudflare": {
+    "bindings": {
+      "CF_API_TOKEN": {
+        "description": "A [Cloudflare API token](https://dash.cloudflare.com/profile/api-tokens) with **Account Intel: Read** and **Access: Audit Logs: Read**."
+      },
+      "CF_ACCOUNT_ID": {
+        "description": "Your Cloudflare [account ID](https://dash.cloudflare.com/), found in the dashboard sidebar."
+      },
+      "SLACK_BOT_TOKEN": {
+        "description": "Leave blank for now. Add after creating your Slack app: the `xoxb-` bot token with the `chat:write` scope."
+      },
+      "SLACK_SIGNING_SECRET": {
+        "description": "Leave blank for now. Add after creating your Slack app: the signing secret that verifies incoming webhooks."
+      }
+    }
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "0.83.0",
+    "@flue/cli": "^2.0.1",
+    "@flue/runtime": "^2.0.1",
+    "@flue/slack": "^2.0.1",
+    "@flue/vite": "^2.0.1",
+    "agents": "0.20.1",
+    "cloudflare": "^7.0.0",
+    "hono": "4.12.32",
+    "valibot": "1.4.2",
+    "vite": "8.1.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.48.0",
+    "@cloudflare/workers-types": "5.20260729.1",
+    "@types/node": "26.1.2",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10",
+    "wrangler": "4.115.0"
+  }
+}

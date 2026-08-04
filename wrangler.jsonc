@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "triage-suspicious-login-agent",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Workers AI. src/app.ts calls
+  // `setProvider(cloudflareBindingProvider({ binding: env.AI, gateway: { id: 'default' } }))`,
+  // so this binding is what makes `cloudflare/openai/gpt-4o` resolve — no API key,
+  // no external provider. Provisioned automatically by the Deploy button.
+  "ai": {
+    "binding": "AI"
+  },
+
+  "vars": {
+    // Deployed, the model routes through the AI binding above. Locally (`flue run`)
+    // there is no binding, so .env sets MODEL=openai/gpt-4o + OPENAI_API_KEY.
+    "MODEL": "cloudflare/openai/gpt-4o"
+  },
+
+  // Flue generates `main` and one Durable Object binding per scanned agent
+  // (login-triage -> FLUE_LOGIN_TRIAGE_AGENT -> FlueLoginTriageAgent). Never
+  // hand-author FLUE_* bindings here. We own the ordered, append-only migration
+  // history; the Deploy button reads it to provision the SQLite-backed DO.
+  "migrations": [
+    {
+      "tag": "flue-class-FlueLoginTriageAgent",
+      "new_sqlite_classes": ["FlueLoginTriageAgent"]
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
