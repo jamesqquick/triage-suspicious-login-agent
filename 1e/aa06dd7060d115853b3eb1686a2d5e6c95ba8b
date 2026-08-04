@@ -1,0 +1,73 @@
+.gitignore
+  s_0fe930fa891455::t_0dd5c048e7aed0 1-8
+flue.config.ts
+  s_f1a7e78a62237a::t_fa4dc907e0003f 1-5
+pnpm-lock.yaml
+  s_f1a7e78a62237a::t_b0b67dab42dde9 1-4408
+src/agents/login-triage.ts
+  s_e890ef7795d397::t_19c9d3deffdca5 1-43
+src/app.ts
+  s_6adb31ae955971::t_ae7ac0b1571395 1-28
+src/channels/slack.ts
+  s_0fe930fa891455::t_39447665360cba 1-44
+src/env.d.ts
+  s_f1a7e78a62237a::t_f5185e92ed2504 1-11
+src/lib/cf-client.ts
+  s_0fe930fa891455::t_8717ac49f185a5 1-42
+src/lib/json.ts
+  s_f1a7e78a62237a::t_ec5ed59c4902ae 1-8
+src/tools/access-logs.ts
+  s_6adb31ae955971::t_42d8d3e4c42ccc 1-35
+src/tools/intel.ts
+  s_e890ef7795d397::t_3bd64efd9328b8 1-190
+src/tools/slack-report.ts
+  s_e890ef7795d397::t_80cd696435dfbf 1-165
+test/config.test.ts
+  s_0fe930fa891455::t_0a7f2e38ffb469 1-81
+test/intel.test.ts
+  s_f1a7e78a62237a::t_57c5c39da19182 1-115
+vite.config.ts
+  s_f1a7e78a62237a::t_4e66b0db087003 1-10
+vitest.config.ts
+  s_f1a7e78a62237a::t_571fd34fca178c 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1eaa06dd7060d115853b3eb1686a2d5e6c95ba8b",
+  "prompts": {},
+  "sessions": {
+    "s_0fe930fa891455": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_036f167eaffeG1Rhme7fr7InNZ",
+        "model": "claude-opus-5"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    },
+    "s_6adb31ae955971": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_032eb6d95ffefJIqGYziBfBgJp",
+        "model": "claude-opus-5"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    },
+    "s_e890ef7795d397": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_031c866b3ffev9nyquXFk0ZSTT",
+        "model": "claude-opus-5"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    },
+    "s_f1a7e78a62237a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_031ce0fe6ffey2Kw5jUfNYqu71",
+        "model": "claude-opus-5"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    }
+  }
+}
