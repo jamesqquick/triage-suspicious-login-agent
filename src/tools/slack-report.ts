@@ -10,7 +10,10 @@ import { RISK_RANK } from '../lib/signals.ts';
 const reportInput = v.object({
   riskLevel: v.pipe(
     v.picklist(['unknown', 'low', 'medium', 'high', 'critical']),
-    v.description('Overall risk assessment. Use "unknown" only when the window returned no records'),
+    v.description(
+      'Overall risk assessment. Use "unknown" only when no records were actually read — ' +
+        'either the window returned none or the log query failed',
+    ),
   ),
   riskFloor: v.pipe(
     v.picklist(['unknown', 'low', 'medium', 'high', 'critical']),
