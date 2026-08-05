@@ -8,7 +8,7 @@ A [Flue](https://flueframework.com) agent that investigates suspicious Cloudflar
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jamesqquick/triage-suspicious-login-agent)
 
-Have a Cloudflare API token and your account ID ready — the setup page requires both, and tells you which scopes the token needs. Leave the two Slack variables blank; you add them once you have a Worker URL.
+Have a Cloudflare API token and your account ID ready — the setup page asks for those two and nothing else, and tells you which scopes the token needs. Slack is not part of this step: you add its secrets after the deploy, once you have a Worker URL to point a Slack app at.
 
 The Workers AI binding and the SQLite-backed Durable Object are declared in `wrangler.jsonc` and provisioned automatically. AI Gateway is not provisioned, and does not need to be: the Worker requests gateway `default`, which AI Gateway creates on the first authenticated request.
 

@@ -27,12 +27,6 @@
       },
       "CF_ACCOUNT_ID": {
         "description": "Your Cloudflare [account ID](https://dash.cloudflare.com/), found in the dashboard sidebar."
-      },
-      "SLACK_BOT_TOKEN": {
-        "description": "Leave blank for now. Add after creating your Slack app: the `xoxb-` bot token with the `chat:write` scope."
-      },
-      "SLACK_SIGNING_SECRET": {
-        "description": "Leave blank for now. Add after creating your Slack app: the signing secret that verifies incoming webhooks."
       }
     }
   },
