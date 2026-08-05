@@ -23,7 +23,7 @@
   "cloudflare": {
     "bindings": {
       "CF_API_TOKEN": {
-        "description": "A [Cloudflare API token](https://dash.cloudflare.com/profile/api-tokens) with **Account Intel: Read** and **Access: Audit Logs: Read**."
+        "description": "A [Cloudflare API token](https://dash.cloudflare.com/profile/api-tokens) with **Intel Read** and **Access: Audit Logs Read**."
       },
       "CF_ACCOUNT_ID": {
         "description": "Your Cloudflare [account ID](https://dash.cloudflare.com/), found in the dashboard sidebar."
