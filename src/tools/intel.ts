@@ -132,8 +132,6 @@ async function enrichDomain(indicator: string): Promise<IntelEntry> {
   })) as DomainIntelResult;
   const categoryNames = raw.content_categories?.map((c) => c.name) ?? [];
   const risk_types = riskTypeNames(raw.risk_types);
-  // Threat if Cloudflare tagged a risk type, or a content category matches a
-  // known-malicious keyword.
   const is_threat =
     risk_types.length > 0 ||
     categoryNames.some((name) =>
@@ -160,8 +158,7 @@ async function enrichOne(indicator: string): Promise<IntelEntry> {
   try {
     return kind === 'domain' ? await enrichDomain(indicator) : await enrichIP(indicator, kind);
   } catch (err) {
-    // A failed lookup (including a 404) is reported, never treated as clean:
-    // absence of a reputation record is not evidence the indicator is safe.
+    // Includes 404: absence of a reputation record is not evidence of safety.
     const { note } = cfErrorNote(err);
     return failed(indicator, kind === 'domain' ? 'domain' : 'ip', note);
   }

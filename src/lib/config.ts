@@ -20,9 +20,8 @@ function read(name: string): string | undefined {
   return value && value.trim().length > 0 ? value : undefined;
 }
 
-// MODEL is provider/model. Local (`flue run`) uses a provider key directly
-// (openai/gpt-4o + OPENAI_API_KEY); deployed uses cloudflare/openai/gpt-4o so the
-// call routes through the Worker AI binding and needs no key.
+// Local (`flue run`) needs a provider key (openai/gpt-4o + OPENAI_API_KEY);
+// deployed uses cloudflare/openai/gpt-4o and routes through the AI binding.
 export function getModel(): `${string}/${string}` {
   const raw = process.env.MODEL ?? 'openai/gpt-4o';
   if (!/^[^/]+\/.+$/.test(raw)) {

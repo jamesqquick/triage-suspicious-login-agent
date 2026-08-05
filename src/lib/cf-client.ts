@@ -18,9 +18,8 @@ export function __setCloudflareClientForTests(client: Cloudflare | undefined): v
   defaultClient = undefined;
 }
 
-// Maps an SDK error to a short status note. A failed or unknown lookup must
-// never be reported as clean, so callers attach the note to a "lookup_failed"
-// result instead of throwing to the model.
+// Callers attach the note to a "lookup_failed" result instead of throwing to
+// the model, so a failed lookup is never reported as clean.
 export interface CfErrorNote {
   status?: number;
   notFound: boolean;

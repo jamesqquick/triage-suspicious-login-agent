@@ -4,8 +4,8 @@ import * as v from 'valibot';
 import { getSlackConfig } from '../lib/config.ts';
 import { asJson } from '../lib/json.ts';
 
-// The model cannot invent a risk level outside the picklist or skip a required
-// field, so the verdict is safe to route on downstream.
+// Strict so the model cannot invent a risk level or omit a field, making the
+// verdict safe to route on downstream.
 const reportInput = v.object({
   riskLevel: v.pipe(
     v.picklist(['low', 'medium', 'high', 'critical']),
@@ -134,8 +134,6 @@ export function createTriageReportTool(dest?: SlackThreadRef) {
         if (result.ok) {
           return { output: asJson({ delivered: 'slack', riskLevel: data.riskLevel }) };
         }
-        // Surface the failure; the full report rides back on the result so it
-        // is not lost when Slack delivery fails.
         log.warn('Slack delivery failed; returning delivered: "failed" with the report', {
           error: result.error,
           riskLevel: data.riskLevel,
