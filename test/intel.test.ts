@@ -35,7 +35,6 @@ const domainResponses: Record<string, unknown> = {
   },
 };
 
-// Fake client exposing only the intel methods the tool calls.
 const fakeClient = {
   intel: {
     ips: {
@@ -72,7 +71,6 @@ describe('classify', () => {
   });
 });
 
-// run() returns a { output } envelope; unwrap and cast for assertions.
 type IntelResult = Record<string, IntelEntry>;
 const runIntel = async (indicators: string[]) =>
   (

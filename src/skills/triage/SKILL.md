@@ -39,7 +39,7 @@ risk level. Call it out in `keyFindings`.
 
 **Risk levels:**
 
-- `low` — one or zero medium signals, no high or critical
+- `low` — no medium signals, no high or critical
 - `medium` — one or two medium signals, no high or critical
 - `high` — any high signal, or three or more medium signals
 - `critical` — any critical signal, or two or more high signals together

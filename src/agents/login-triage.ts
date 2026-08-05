@@ -10,8 +10,7 @@ import triageSkill from '../skills/triage/SKILL.md';
 export function LoginTriage() {
   useModel(getModel());
 
-  // Set from the originating Slack thread so the report tool can post back;
-  // undefined under `flue run`.
+  // Undefined under `flue run`; set from the Slack thread otherwise.
   const slackThread = useInitialData<v.InferOutput<typeof LoginTriage.initialData>>();
 
   useSkill(triageSkill);
@@ -19,8 +18,7 @@ export function LoginTriage() {
   useTool(getIndicatorIntel);
   useTool(createTriageReportTool(slackThread));
 
-  // Trusted requester identity: set on the signal's `attributes` by verified
-  // webhook code, never from model input.
+  // Trusted identity: set by verified webhook code, never from model input.
   const delivery = useDelivery();
   const requestedBy = delivery.kind === 'signal' ? delivery.attributes?.requestedBy : undefined;
 
@@ -36,8 +34,8 @@ export function LoginTriage() {
 
 LoginTriage.agentName = 'login-triage';
 
-// Optional so local `flue run` works with no Slack thread; a malformed Slack
-// dispatch fails fast at admission instead of seeding a broken conversation.
+// Optional so `flue run` works with no Slack thread; a malformed dispatch still
+// fails fast at admission rather than seeding a broken conversation.
 LoginTriage.initialData = v.optional(
   v.object({ teamId: v.string(), channelId: v.string(), threadTs: v.string() }),
 );

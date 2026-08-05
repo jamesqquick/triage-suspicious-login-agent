@@ -4,10 +4,9 @@ import { getCloudflareClient } from '../lib/cf-client.ts';
 import { getCloudflareApiConfig } from '../lib/config.ts';
 import { asJson } from '../lib/json.ts';
 
-// AccessRequest records come from GET /accounts/{id}/access/logs/access_requests.
 // https://developers.cloudflare.com/api/resources/zero_trust/subresources/access/subresources/logs/subresources/access_requests/methods/list/
-// Fields are snake_case, and there is no DeviceID — Access logs identify the user
-// and source IP, not the device.
+// Fields are snake_case, and there is no device id — Access logs identify the
+// user and source IP, not the device.
 export const getAccessLogs = defineTool({
   name: 'get_access_logs',
   description:

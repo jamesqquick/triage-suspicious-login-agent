@@ -2,82 +2,17 @@
 
 A [Flue](https://flueframework.com) agent that investigates suspicious Cloudflare Access logins. Tag it in Slack, and it pulls the user's Access logs, enriches every source IP with Cloudflare threat intelligence, scores the risk against a rubric, and posts a structured report back to the thread.
 
-Full walkthrough: **[Triage Suspicious Logins with Flue and Slack](https://flueframework.com/learn/triage-suspicious-logins/)**
+**[Full walkthrough: Triage Suspicious Logins with Flue and Slack](https://flueframework.com/learn/triage-suspicious-logins/)** — deploying, connecting Slack, running it locally, and tuning the rubric.
 
 ## Deploy
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jamesqquick/triage-suspicious-login-agent)
 
-Have `CF_API_TOKEN` and `CF_ACCOUNT_ID` in hand before you start — the setup page requires both. The token needs `Account Intel: Read` and `Access: Audit Logs: Read`.
-
-Leave `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET` blank; you add them in [Connect Slack](#connect-slack) once you have a Worker URL.
+Have a Cloudflare API token and your account ID ready — the setup page requires both, and tells you which scopes the token needs. Leave the two Slack variables blank; you add them once you have a Worker URL.
 
 The Workers AI binding and the SQLite-backed Durable Object are declared in `wrangler.jsonc` and provisioned automatically. AI Gateway is not provisioned, and does not need to be: the Worker requests gateway `default`, which AI Gateway creates on the first authenticated request.
 
-### Send your first investigation
-
-```bash
-curl -X POST https://<your-worker>.workers.dev/agents/login-triage \
-  -H 'Content-Type: application/json' \
-  -d '{"message":"investigate employee@company.com"}'
-```
-
-### Connect Slack
-
-1. Create a Slack app at [api.slack.com/apps](https://api.slack.com/apps)
-2. Add the `app_mentions:read` and `chat:write` bot scopes, then install the app
-3. Add the two secrets:
-
-   ```bash
-   wrangler secret put SLACK_BOT_TOKEN
-   wrangler secret put SLACK_SIGNING_SECRET
-   ```
-
-4. Under **Event Subscriptions**, set the request URL to `https://<your-worker>.workers.dev/channels/slack/events` and subscribe to the `app_mention` bot event
-
-Then mention the bot:
-
-```
-@login-triage investigate employee@company.com
-```
-
-## Run it locally
-
-```bash
-git clone https://github.com/jamesqquick/triage-suspicious-login-agent
-cd triage-suspicious-login-agent
-pnpm install
-cp .env.example .env
-```
-
-Fill in `CF_API_TOKEN` and `CF_ACCOUNT_ID`. Then add two more variables that are **not** in `.env.example`:
-
-```bash
-MODEL=openai/gpt-4o
-OPENAI_API_KEY=sk-...
-```
-
-`flue run` is an ordinary Node process, so there is no Workers AI binding to borrow — a local run needs a direct provider key. These two are deliberately excluded from `.env.example` because every variable in that file becomes a required prompt on the Deploy page, and the deployed Worker needs neither. Deployed, `MODEL` stays `cloudflare/openai/gpt-4o` (set in `wrangler.jsonc`) and routes through the binding.
-
-Then run the agent:
-
-```bash
-pnpm flue run src/agents/login-triage.ts --message "investigate employee@company.com"
-```
-
-Or with the shorthand script:
-
-```bash
-pnpm agent "investigate employee@company.com"
-```
-
-`flue run` executes the agent with no HTTP server and no Slack channel, which makes it the right place to develop the rubric — you get the report as terminal output instead of a thread message.
-
-Because it reads live Access logs, running against the same user twice gives you a stable dataset to compare rubric edits against, as long as you pin an explicit window in the prompt rather than letting it default to "the last 7 days":
-
-```bash
-pnpm agent "investigate employee@company.com from 2026-07-01T00:00:00Z to 2026-07-08T00:00:00Z"
-```
+Sending your first investigation and wiring up Slack are covered in the [walkthrough](https://flueframework.com/learn/triage-suspicious-logins/).
 
 ## How it works
 
@@ -107,19 +42,13 @@ Slack @mention
 ## Development
 
 ```bash
+pnpm install
 pnpm typecheck
 pnpm test
 pnpm predeploy   # vite build + wrangler deploy --dry-run
 ```
 
-## Make it your own
-
-- **Tune the rubric.** Edit `SKILL.md`, re-run against a pinned time window, and see how the verdict moves.
-- **Change the delivery surface.** Swap the Slack channel for GitHub, Telegram, or email — the agent and tools don't change.
-- **Add a signal.** Any Cloudflare API can become a tool. Gateway DNS/HTTP logs need Logpush to R2 and only cover traffic from the moment you enable it; Cloudforce One threat events need a paid subscription.
-- **Split the work with subagents.** As tool count grows, group collection and enrichment into subagents so each gets its own focused context.
-- **Persist verdicts.** Write each report to D1 or KV to track repeat offenders across investigations.
-- **Use a dedicated AI Gateway.** Replace `default` in `src/app.ts` with a named gateway to isolate this project's logs, caching, and budget.
+Running the agent locally needs a direct model provider key, since `flue run` has no Workers AI binding to borrow. The [walkthrough](https://flueframework.com/learn/triage-suspicious-logins/#run-it-locally) covers the setup.
 
 ## License
 
