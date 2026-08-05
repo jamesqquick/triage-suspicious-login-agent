@@ -1,0 +1,19 @@
+src/tools/slack-report.ts
+  s_e890ef7795d397::t_2b676304cb73fe 139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "890166ec473aca3bf7f6d3e90414b2049d6af045",
+  "prompts": {},
+  "sessions": {
+    "s_e890ef7795d397": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_031c866b3ffev9nyquXFk0ZSTT",
+        "model": "claude-opus-5"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    }
+  }
+}
