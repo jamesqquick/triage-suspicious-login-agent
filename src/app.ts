@@ -21,6 +21,12 @@ app.route('/agents/login-triage', createAgentRouter(LoginTriage));
 
 // Wrapped in createChannelRouter so the returned Hono is typed against this
 // app's hono version (@flue/slack bundles an older, incompatible one).
-app.route('/channels/slack', createChannelRouter(channel.routes));
+if (channel) {
+  app.route('/channels/slack', createChannelRouter(channel.routes));
+} else {
+  app.all('/channels/slack/*', (c) =>
+    c.json({ error: 'Slack ingress is disabled: SLACK_SIGNING_SECRET is not set.' }, 503),
+  );
+}
 
 export default app;
