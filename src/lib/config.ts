@@ -54,7 +54,8 @@ export function getCloudflareApiConfig(): CloudflareApiConfig {
 }
 
 export interface SlackConfig {
-  /** Empty string when unset — verification then rejects (fail closed). */
+  /** Empty string when unset — the channel is then not built at all and
+   *  /channels/slack/* serves 503, so verification never runs. */
   signingSecret: string;
   botToken: string | undefined;
 }

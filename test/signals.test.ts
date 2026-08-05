@@ -217,3 +217,39 @@ describe('computeSignals offHoursSummary', () => {
     expect(s.offHoursSummary).toBe('no logins outside 6:00-22:00 UTC');
   });
 });
+
+// A failed Access log query used to throw out of the tool, which produced no signals
+// block, so no rubric rule matched and the model wrote prose instead of calling
+// post_triage_report — leaving the Slack thread silent. The failure is now data.
+describe('computeSignals fetch failure', () => {
+  test('floors at unknown when the query failed', () => {
+    const s = computeSignals([], 'no read access (403)');
+    expect(s.riskFloor).toBe('unknown');
+    expect(s.fetchError).toBe('no read access (403)');
+  });
+
+  test('names the failure instead of claiming the window was empty', () => {
+    const s = computeSignals([], 'upstream error (504)');
+    expect(s.riskFloorReason).toContain('upstream error (504)');
+    expect(s.riskFloorReason).toContain('failed');
+    expect(s.riskFloorReason).not.toContain('coverage gap');
+  });
+
+  test('an empty window is still reported as a coverage gap, not a failure', () => {
+    const s = computeSignals([]);
+    expect(s.fetchError).toBeNull();
+    expect(s.riskFloor).toBe('unknown');
+    expect(s.riskFloorReason).toContain('coverage gap');
+  });
+
+  test('successful fetches carry no fetchError', () => {
+    expect(computeSignals(burst).fetchError).toBeNull();
+  });
+
+  test('a failure outranks signals that would otherwise score, since none were read', () => {
+    const s = computeSignals([], 'rate limited (429)');
+    expect(s.riskFloor).toBe('unknown');
+    expect(s.deniedCount).toBe(0);
+    expect(s.distinctIpCount).toBe(0);
+  });
+});

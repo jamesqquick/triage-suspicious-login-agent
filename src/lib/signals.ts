@@ -71,6 +71,9 @@ export interface Signals {
    *  denial/off-hours correlation, so the correct wording is supplied rather than asked for. */
   offHoursSummary: string;
   triggeringEvent: TriggeringEvent | null;
+  /** Set when the Access log query itself failed, so zero records is distinguishable
+   *  from "the window was genuinely empty". Null on every successful fetch. */
+  fetchError: string | null;
   riskFloor: RiskLevel;
   riskFloorReason: string;
 }
@@ -182,7 +185,17 @@ function computeRiskFloor(signals: {
   deniedCount: number;
   denialBursts: DenialBurst[];
   offHoursUtcCount: number;
+  fetchError: string | null;
 }): { riskFloor: RiskLevel; riskFloorReason: string } {
+  // Checked before totalRecords, because a failed fetch also yields zero records
+  // and the two must not be reported as the same thing: "no logins found" would
+  // be a factual claim about the account that was never actually established.
+  if (signals.fetchError) {
+    return {
+      riskFloor: 'unknown',
+      riskFloorReason: `the Access log query failed (${signals.fetchError}) — no records were read, so nothing about this user has been assessed`,
+    };
+  }
   if (signals.totalRecords === 0) {
     return {
       riskFloor: 'unknown',
@@ -212,7 +225,12 @@ function computeRiskFloor(signals: {
   };
 }
 
-export function computeSignals(records: AccessRecord[]): Signals {
+/**
+ * @param fetchError Non-null when the Access log query failed. Callers pass the
+ *   error instead of throwing, so the failure arrives as data the rubric already
+ *   scores (`unknown`) rather than as a tool error the model has no rule for.
+ */
+export function computeSignals(records: AccessRecord[], fetchError: string | null = null): Signals {
   const denials = records.filter((r) => r.allowed === false);
 
   const distinctIps: string[] = [];
@@ -258,6 +276,7 @@ export function computeSignals(records: AccessRecord[]): Signals {
     deniedCount: denials.length,
     denialBursts,
     offHoursUtcCount,
+    fetchError,
   });
 
   return {
@@ -272,6 +291,7 @@ export function computeSignals(records: AccessRecord[]): Signals {
     offHoursUtcDeniedCount,
     offHoursSummary,
     triggeringEvent: selectTriggeringEvent(records, denials, denialBursts),
+    fetchError,
     riskFloor,
     riskFloorReason,
   };
