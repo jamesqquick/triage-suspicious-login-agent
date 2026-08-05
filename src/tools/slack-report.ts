@@ -136,7 +136,7 @@ export function createTriageReportTool(dest?: SlackThreadRef) {
         }
         // Surface the failure; the full report rides back on the result so it
         // is not lost when Slack delivery fails.
-        log.warn('Slack delivery failed; falling back to run output', {
+        log.warn('Slack delivery failed; returning delivered: "failed" with the report', {
           error: result.error,
           riskLevel: data.riskLevel,
         });
