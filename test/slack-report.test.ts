@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { buildBlocks, createTriageReportTool, formatReport } from '../src/tools/slack-report.ts';
+import {
+  applyRiskFloor,
+  buildBlocks,
+  createTriageReportTool,
+  formatReport,
+} from '../src/tools/slack-report.ts';
 
 const report = {
   riskLevel: 'critical' as const,
@@ -87,5 +92,73 @@ describe('createTriageReportTool delivery', () => {
     };
     expect(result.delivered).toBe('failed');
     expect(result.error).toMatch(/SLACK_BOT_TOKEN/);
+  });
+});
+
+describe('applyRiskFloor', () => {
+  const base = { ...report, riskFloor: 'high' as const };
+
+  test('raises an under-scored verdict to the floor and flags it', () => {
+    // The measured 1-in-5 failure: `medium` returned on a 5-denial burst.
+    const out = applyRiskFloor({ ...base, riskLevel: 'medium', riskFloor: 'high' });
+    expect(out.riskLevel).toBe('high');
+    expect(out.escalatedByPolicy).toBe(true);
+  });
+
+  test('leaves a verdict at the floor untouched', () => {
+    const out = applyRiskFloor({ ...base, riskLevel: 'high', riskFloor: 'high' });
+    expect(out.riskLevel).toBe('high');
+    expect(out.escalatedByPolicy).toBe(false);
+  });
+
+  test('allows scoring above the floor when intel adds a critical signal', () => {
+    const out = applyRiskFloor({ ...base, riskLevel: 'critical', riskFloor: 'high' });
+    expect(out.riskLevel).toBe('critical');
+    expect(out.escalatedByPolicy).toBe(false);
+  });
+
+  test('an unknown floor forces unknown — no records means no verdict', () => {
+    // The measured zero-data failure: scored `low` while saying logs were missing.
+    const out = applyRiskFloor({ ...base, riskLevel: 'low', riskFloor: 'unknown' });
+    expect(out.riskLevel).toBe('unknown');
+    expect(out.escalatedByPolicy).toBe(true);
+  });
+
+  test('unknown floor with an unknown verdict is not an escalation', () => {
+    const out = applyRiskFloor({ ...base, riskLevel: 'unknown', riskFloor: 'unknown' });
+    expect(out.riskLevel).toBe('unknown');
+    expect(out.escalatedByPolicy).toBe(false);
+  });
+
+  test('unknown verdict against a real floor is raised to the floor', () => {
+    const out = applyRiskFloor({ ...base, riskLevel: 'unknown', riskFloor: 'medium' });
+    expect(out.riskLevel).toBe('medium');
+    expect(out.escalatedByPolicy).toBe(true);
+  });
+
+  test('riskFloor is not rendered into the report body', () => {
+    const out = applyRiskFloor({ ...base, riskLevel: 'high', riskFloor: 'high' });
+    expect(out).not.toHaveProperty('riskFloor');
+  });
+});
+
+describe('escalation is visible in the rendered report', () => {
+  test('formatReport notes a policy-set level', () => {
+    const text = formatReport({ ...report, escalatedByPolicy: true });
+    expect(text).toContain('policy floor');
+  });
+  test('formatReport stays clean when the model agreed with the floor', () => {
+    expect(formatReport({ ...report, escalatedByPolicy: false })).not.toContain('policy floor');
+  });
+  test('buildBlocks surfaces the escalation notice', () => {
+    const blocks = buildBlocks({ ...report, escalatedByPolicy: true }) as Array<
+      Record<string, any>
+    >;
+    const notice = blocks.find((b) => b.elements?.[0]?.text?.includes('policy floor'));
+    expect(notice).toBeDefined();
+  });
+  test('unknown risk level renders', () => {
+    const text = formatReport({ ...report, riskLevel: 'unknown' });
+    expect(text).toContain('risk: UNKNOWN');
   });
 });

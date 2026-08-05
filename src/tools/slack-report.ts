@@ -3,13 +3,18 @@ import type { SlackThreadRef } from '@flue/slack';
 import * as v from 'valibot';
 import { getSlackConfig } from '../lib/config.ts';
 import { asJson } from '../lib/json.ts';
+import { RISK_RANK } from '../lib/signals.ts';
 
 // Strict so the model cannot invent a risk level or omit a field, making the
 // verdict safe to route on downstream.
 const reportInput = v.object({
   riskLevel: v.pipe(
-    v.picklist(['low', 'medium', 'high', 'critical']),
-    v.description('Overall risk assessment'),
+    v.picklist(['unknown', 'low', 'medium', 'high', 'critical']),
+    v.description('Overall risk assessment. Use "unknown" only when the window returned no records'),
+  ),
+  riskFloor: v.pipe(
+    v.picklist(['unknown', 'low', 'medium', 'high', 'critical']),
+    v.description('Copy signals.riskFloor from get_access_logs verbatim'),
   ),
   summary: v.pipe(v.string(), v.description('One sentence summary of the event')),
   keyFindings: v.pipe(v.array(v.string()), v.description('Most important findings first')),
@@ -18,20 +23,58 @@ const reportInput = v.object({
   recommendedAction: v.pipe(v.string(), v.description('Recommended next step')),
 });
 
-type Report = v.InferOutput<typeof reportInput>;
+type ReportInput = v.InferOutput<typeof reportInput>;
+
+// What the formatters render: the floor has already been applied.
+export type Report = Omit<ReportInput, 'riskFloor'> & { escalatedByPolicy?: boolean };
 
 const RISK_EMOJI: Record<Report['riskLevel'], string> = {
+  unknown: '\u26AA',
   low: '\u{1F7E2}',
   medium: '\u{1F7E1}',
   high: '\u{1F7E0}',
   critical: '\u{1F534}',
 };
 
+/**
+ * Enforces the floor computed from the log data. Measured across 5 identical runs
+ * the model returned `medium` once on a 5-denial burst, so the verdict cannot rest
+ * on prose alone. Under-scoring is corrected rather than rejected: rejecting risks
+ * a retry loop, and a report that arrives escalated is more useful than none.
+ *
+ * `unknown` is not on the low..critical axis — when the floor is `unknown` there
+ * were no records, so no risk verdict is supportable in either direction.
+ */
+export function applyRiskFloor(input: ReportInput): Report {
+  const { riskFloor, ...rest } = input;
+
+  if (riskFloor === 'unknown') {
+    return {
+      ...rest,
+      riskLevel: 'unknown',
+      escalatedByPolicy: rest.riskLevel !== 'unknown',
+    };
+  }
+
+  if (rest.riskLevel === 'unknown') {
+    return { ...rest, riskLevel: riskFloor, escalatedByPolicy: true };
+  }
+
+  if (RISK_RANK[rest.riskLevel] < RISK_RANK[riskFloor]) {
+    return { ...rest, riskLevel: riskFloor, escalatedByPolicy: true };
+  }
+
+  return { ...rest, escalatedByPolicy: false };
+}
+
 export function formatReport(r: Report): string {
   const bullets = (items: string[]) =>
     items.length ? items.map((i) => `  \u2022 ${i}`).join('\n') : '  (none)';
   return [
     `LOGIN TRIAGE REPORT  \u2014  risk: ${r.riskLevel.toUpperCase()}`,
+    ...(r.escalatedByPolicy
+      ? ['(risk level set by policy floor from the log data, not by the model)']
+      : []),
     `Summary: ${r.summary}`,
     '',
     'Key findings:',
@@ -63,6 +106,19 @@ export function buildBlocks(r: Report): unknown[] {
         emoji: true,
       },
     },
+    ...(r.escalatedByPolicy
+      ? [
+          {
+            type: 'context',
+            elements: [
+              {
+                type: 'mrkdwn',
+                text: '_Risk level set by policy floor from the log data, not by the model._',
+              },
+            ],
+          },
+        ]
+      : []),
     { type: 'section', text: { type: 'mrkdwn', text: `*Summary*\n${esc(r.summary)}` } },
     { type: 'section', text: { type: 'mrkdwn', text: `*Access event*\n${esc(r.accessEvent)}` } },
     { type: 'section', text: { type: 'mrkdwn', text: `*Key findings*\n${bullets(r.keyFindings)}` } },
@@ -122,40 +178,58 @@ export function createTriageReportTool(dest?: SlackThreadRef) {
     description:
       'Post the completed login triage report to the originating Slack thread, or to the run ' +
       'output when there is no Slack thread. Returns delivered: "slack" | "run-output" | "failed"; ' +
-      'a "failed" result means the report could NOT be delivered to Slack and includes the error.',
+      'a "failed" result means the report could NOT be delivered to Slack and includes the error. ' +
+      'riskLevel is raised to signals.riskFloor if it is below it, so under-scoring cannot ship.',
     input: reportInput,
     // durable: on interruption after Slack accepts but before the result is
     // recorded, recovery replays the recorded step instead of re-posting, so the
     // report is never double-delivered.
     durable: true,
     async run({ data, step, log }) {
+      const report = applyRiskFloor(data);
+      if (report.escalatedByPolicy) {
+        log.warn('riskLevel raised to the policy floor computed from the log data', {
+          modelRiskLevel: data.riskLevel,
+          riskFloor: data.riskFloor,
+          riskLevel: report.riskLevel,
+        });
+      }
+
       if (dest) {
-        const result = await step.do('post-to-slack', () => postToSlack(dest, data));
+        const result = await step.do('post-to-slack', () => postToSlack(dest, report));
         if (result.ok) {
-          return { output: asJson({ delivered: 'slack', riskLevel: data.riskLevel }) };
+          return {
+            output: asJson({
+              delivered: 'slack',
+              riskLevel: report.riskLevel,
+              escalatedByPolicy: report.escalatedByPolicy,
+            }),
+          };
         }
-        log.warn('Slack delivery failed; returning delivered: "failed" with the report', {
+        log.warn('Slack delivery failed; returning delivered: "failed" with the error', {
           error: result.error,
-          riskLevel: data.riskLevel,
+          riskLevel: report.riskLevel,
         });
         return {
           output: asJson({
             delivered: 'failed',
-            riskLevel: data.riskLevel,
+            riskLevel: report.riskLevel,
+            escalatedByPolicy: report.escalatedByPolicy,
             error: result.error,
-            report: formatReport(data),
+            report: formatReport(report),
           }),
         };
       }
 
       log.info('No Slack thread bound; triage report delivered to run output', {
-        riskLevel: data.riskLevel,
+        riskLevel: report.riskLevel,
       });
       return {
         output: asJson({
           delivered: 'run-output',
-          riskLevel: data.riskLevel,
-          report: formatReport(data),
+          riskLevel: report.riskLevel,
+          escalatedByPolicy: report.escalatedByPolicy,
+          report: formatReport(report),
         }),
       };
     },
