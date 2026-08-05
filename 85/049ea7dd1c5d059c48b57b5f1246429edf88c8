@@ -1,0 +1,21 @@
+test/signals.test.ts
+  s_da5575dc42bc01::t_750b4b1ef86247 1-219
+test/slack-report.test.ts
+  s_da5575dc42bc01::t_92b3b8f745a70f 2-7,97-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "85049ea7dd1c5d059c48b57b5f1246429edf88c8",
+  "prompts": {},
+  "sessions": {
+    "s_da5575dc42bc01": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_02d510c56ffeMoS3VkJNgwjXaq",
+        "model": "claude-opus-5"
+      },
+      "human_author": "James Quick <jquick@cloudflare.com>"
+    }
+  }
+}
