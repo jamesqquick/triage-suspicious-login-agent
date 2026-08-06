@@ -1,14 +1,16 @@
 'use agent';
 import { useDelivery, useInitialData, useModel, useSkill, useTool } from '@flue/runtime';
 import * as v from 'valibot';
-import { getModel } from '../lib/config.ts';
 import { createTriageReportTool } from '../tools/slack-report.ts';
 import { getAccessLogs } from '../tools/access-logs.ts';
 import { getIndicatorIntel } from '../tools/intel.ts';
 import triageSkill from '../skills/triage/SKILL.md';
 
 export function LoginTriage() {
-  useModel(getModel());
+  // Routes through the AI binding + AI Gateway (see app.ts) both locally
+  // (`vite dev`) and deployed. Set MODEL to any provider/model string if you
+  // want something else — an unset or malformed value fails in useModel().
+  useModel(process.env.MODEL!);
 
   // Undefined under `flue run`; set from the Slack thread otherwise.
   const slackThread = useInitialData<v.InferOutput<typeof LoginTriage.initialData>>();

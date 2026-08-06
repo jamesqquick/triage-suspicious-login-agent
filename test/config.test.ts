@@ -1,20 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import {
-  getCloudflareApiConfig,
-  getModel,
-  getSlackConfig,
-  InvalidConfigError,
-  MissingConfigError,
-} from '../src/lib/config.ts';
+import { getCloudflareApiConfig, getSlackConfig, MissingConfigError } from '../src/lib/config.ts';
 
 // Config reads process.env at call time, so each test mutates a clean copy.
-const CONFIG_VARS = [
-  'MODEL',
-  'CF_API_TOKEN',
-  'CF_ACCOUNT_ID',
-  'SLACK_SIGNING_SECRET',
-  'SLACK_BOT_TOKEN',
-];
+const CONFIG_VARS = ['CF_API_TOKEN', 'CF_ACCOUNT_ID', 'SLACK_SIGNING_SECRET', 'SLACK_BOT_TOKEN'];
 
 let saved: Record<string, string | undefined>;
 
@@ -31,20 +19,6 @@ afterEach(() => {
     if (saved[key] === undefined) delete process.env[key];
     else process.env[key] = saved[key];
   }
-});
-
-describe('getModel', () => {
-  test('defaults to openai/gpt-4o', () => {
-    expect(getModel()).toBe('openai/gpt-4o');
-  });
-  test('accepts provider/model form', () => {
-    process.env.MODEL = 'cloudflare/openai/gpt-4o';
-    expect(getModel()).toBe('cloudflare/openai/gpt-4o');
-  });
-  test('rejects malformed model specifier', () => {
-    process.env.MODEL = 'not-a-valid-model';
-    expect(() => getModel()).toThrow(InvalidConfigError);
-  });
 });
 
 describe('getCloudflareApiConfig', () => {

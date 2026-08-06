@@ -8,13 +8,19 @@
   // `setProvider(cloudflareBindingProvider({ binding: env.AI, gateway: { id: 'default' } }))`,
   // so this binding is what makes `cloudflare/openai/gpt-4o` resolve — no API key,
   // no external provider. Provisioned automatically by the Deploy button.
+  // `remote: true` is explicit here because Workers AI has no local simulation:
+  // `vite dev` always calls the real Workers AI/AI Gateway service, so local
+  // runs behave (and are billed) the same way deployed runs are.
   "ai": {
-    "binding": "AI"
+    "binding": "AI",
+    "remote": true
   },
 
   "vars": {
-    // Deployed, the model routes through the AI binding above. Locally (`flue run`)
-    // there is no binding, so .env sets MODEL=openai/gpt-4o + OPENAI_API_KEY.
+    // Deployed AND locally under `vite dev`, the model routes through the AI
+    // binding above — no API key needed either way. `flue run` does not load
+    // app.ts (no binding, no setProvider call), so it can't use this path; use
+    // `vite dev` for local runs of this agent instead.
     "MODEL": "cloudflare/openai/gpt-4o"
   },
 

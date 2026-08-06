@@ -8,28 +8,9 @@ export class MissingConfigError extends Error {
   }
 }
 
-export class InvalidConfigError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'InvalidConfigError';
-  }
-}
-
 function read(name: string): string | undefined {
   const value = process.env[name];
   return value && value.trim().length > 0 ? value : undefined;
-}
-
-// Local (`flue run`) needs a provider key (openai/gpt-4o + OPENAI_API_KEY);
-// deployed uses cloudflare/openai/gpt-4o and routes through the AI binding.
-export function getModel(): `${string}/${string}` {
-  const raw = process.env.MODEL ?? 'openai/gpt-4o';
-  if (!/^[^/]+\/.+$/.test(raw)) {
-    throw new InvalidConfigError(
-      `MODEL must be in "provider/model" form (e.g. "openai/gpt-4o"), got "${raw}".`,
-    );
-  }
-  return raw as `${string}/${string}`;
 }
 
 export interface CloudflareApiConfig {
