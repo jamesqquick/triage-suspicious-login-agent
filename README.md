@@ -48,7 +48,7 @@ pnpm test
 pnpm predeploy   # vite build + wrangler deploy --dry-run
 ```
 
-Running the agent locally needs a direct model provider key, since `flue run` has no Workers AI binding to borrow. The [walkthrough](https://flueframework.com/learn/triage-suspicious-logins/#run-it-locally) covers the setup.
+Run the agent locally with `vite dev`, which has the Workers AI binding `flue run` lacks — no model provider key needed either way. The [walkthrough](https://flueframework.com/learn/triage-suspicious-logins/#run-it-locally) covers the setup.
 
 ## License
 
